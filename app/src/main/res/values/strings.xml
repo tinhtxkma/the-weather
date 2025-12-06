@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">The Weather</string>
+    <string name="home_tab">Home</string>
+    <string name="location_tab">Location</string>
+    <string name="settings_tab">Settings</string>
+    <string name="welcome_title">Welcome to The Weather</string>
+    <string name="welcome_description">Get accurate weather information for your location</string>
+    <string name="get_started">Get Started</string>
+</resources>

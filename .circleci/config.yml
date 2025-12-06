@@ -1,0 +1,89 @@
+version: 2.1
+
+# Define the Android orb for easier configuration
+orbs:
+  android: circleci/android@2.4.0
+
+jobs:
+  build-and-test:
+    executor:
+      name: android/android-docker
+      tag: 2024.01.1
+    
+    steps:
+      - checkout
+      
+      # Restore Gradle cache
+      - restore_cache:
+          keys:
+            - gradle-cache-v1-{{ checksum "build.gradle.kts" }}-{{ checksum "app/build.gradle.kts" }}
+            - gradle-cache-v1-
+      
+      # Restore Gradle wrapper
+      - restore_cache:
+          keys:
+            - gradle-wrapper-v1-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
+            - gradle-wrapper-v1-
+      
+      # Make gradlew executable
+      - run:
+          name: Make gradlew executable
+          command: chmod +x gradlew
+      
+      # Download dependencies
+      - run:
+          name: Download Dependencies
+          command: ./gradlew androidDependencies
+      
+      # Save Gradle cache
+      - save_cache:
+          paths:
+            - ~/.gradle/caches
+            - ~/.gradle/wrapper
+          key: gradle-cache-v1-{{ checksum "build.gradle.kts" }}-{{ checksum "app/build.gradle.kts" }}
+      
+      # Save Gradle wrapper cache
+      - save_cache:
+          paths:
+            - ~/.gradle/wrapper
+          key: gradle-wrapper-v1-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
+      
+      # Run lint checks
+      - run:
+          name: Run Lint
+          command: ./gradlew lint
+      
+      # Run unit tests
+      - run:
+          name: Run Unit Tests
+          command: ./gradlew test
+      
+      # Build debug APK
+      - run:
+          name: Build Debug APK
+          command: ./gradlew assembleDebug
+      
+      # Store lint results
+      - store_artifacts:
+          path: app/build/reports/lint-results-debug.html
+          destination: lint-results
+      
+      # Store test results
+      - store_test_results:
+          path: app/build/test-results
+      
+      # Store test reports
+      - store_artifacts:
+          path: app/build/reports/tests
+          destination: test-reports
+      
+      # Store APK
+      - store_artifacts:
+          path: app/build/outputs/apk/debug
+          destination: apk
+
+workflows:
+  version: 2
+  build-test-deploy:
+    jobs:
+      - build-and-test
